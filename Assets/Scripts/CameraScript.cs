@@ -4,34 +4,34 @@ using UnityEngine;
 
 public class CameraScript : MonoBehaviour
 {
-    public float movementSpeed = 5.0f; // Adjust this to control the camera movement speed.
-    public float sphereRadius = 10.0f; // Set the radius of your sphere.
-    public Transform target; // Set the target the camera should look at.
+    public Transform target; // The target object to orbit around.
+    public float orbitSpeed = 3.0f; // Adjust this value to control the orbit speed.
+    [SerializeField]
+    public float distance = 2.0f; // Distance from the target.
+    public float minY = 0.0f; // Minimum vertical angle (degrees).
+    public float maxY = 80.0f; // Maximum vertical angle (degrees).
+
+    private float currentRotationX = 0.0f;
 
     void Update()
     {
-        // Check for key presses and move the camera accordingly.
-        if (Input.GetKey(KeyCode.W))
-        {
-            transform.Translate(Vector3.up * movementSpeed * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            transform.Translate(Vector3.down * movementSpeed * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            transform.Translate(Vector3.left * movementSpeed * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            transform.Translate(Vector3.right * movementSpeed * Time.deltaTime);
-        }
+        // Get input for camera movement.
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
 
-        // Ensure the camera stays on the sphere's surface.
-        transform.position = transform.position.normalized * sphereRadius;
+        // Calculate the new rotation angles.
+        currentRotationX += verticalInput * orbitSpeed;
+        currentRotationX = Mathf.Clamp(currentRotationX, minY, maxY);
 
-        // Smoothly interpolate the camera's rotation to look at the target.
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(target.position - transform.position), 0.1f);
+        // Calculate the new camera position.
+        Quaternion rotation = Quaternion.Euler(currentRotationX, transform.eulerAngles.y + horizontalInput * orbitSpeed, 0);
+        Vector3 desiredPosition = target.position - (rotation * Vector3.forward * distance);
+
+        if(desiredPosition.y < 2)
+            desiredPosition.y = 2;
+
+        // Update camera position and rotation.
+        transform.position = desiredPosition;
+        transform.LookAt(target);
     }
 }
